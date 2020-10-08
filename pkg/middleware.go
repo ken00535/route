@@ -8,27 +8,51 @@ type Middleware func(Handler) Handler
 
 // New a processor
 func New() Processor {
-	return Processor{}
+	p := Processor{}
+	p.callbacks = make(map[string]Handler)
+	p.middlewareChains = make(map[string][]Middleware)
+	p.callbackChannels = make(map[string]chan error)
+	return p
 }
 
 // Processor process message
 type Processor struct {
-	handler         Handler
-	middlewareChain []Middleware
+	callbacks        map[string]Handler
+	middlewareChains map[string][]Middleware
+	callbackChannels map[string]chan error
+}
+
+// UseTopic add middleware
+func (r *Processor) UseTopic(topic string, m ...Middleware) {
+	r.middlewareChains[topic] = append(r.middlewareChains[topic], m...)
 }
 
 // Use add middleware
 func (r *Processor) Use(m ...Middleware) {
-	r.middlewareChain = append(r.middlewareChain, m...)
+	r.middlewareChains[defaultTopic] = append(r.middlewareChains[defaultTopic], m...)
 }
 
 // Run router
-func (r *Processor) Run(message interface{}) error {
-	r.handler = func(in interface{}) error {
-		return nil
+func (r *Processor) Run(message interface{}) []error {
+	var ret []error
+	for k, middlewareChain := range r.middlewareChains {
+		r.callbacks[k] = func(in interface{}) error {
+			return nil
+		}
+		for i := len(middlewareChain) - 1; i >= 0; i-- {
+			r.callbacks[k] = middlewareChain[i](r.callbacks[k])
+		}
+		r.callbackChannels[k] = make(chan error, 1)
+		go func(topic string) {
+			err := r.callbacks[topic](message)
+			r.callbackChannels[topic] <- err
+		}(k)
 	}
-	for i := len(r.middlewareChain) - 1; i >= 0; i-- {
-		r.handler = r.middlewareChain[i](r.handler)
+	for k := range r.callbackChannels {
+		err := <-r.callbackChannels[k]
+		if err != nil {
+			ret = append(ret, err)
+		}
 	}
-	return r.handler(message)
+	return ret
 }
