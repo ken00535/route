@@ -1,5 +1,5 @@
-package gonion
+package router
 
 const (
-	defaultTopic string = "defaultTopic"
+	defaultTopic string = "github/gorouter/pkg/router"
 )

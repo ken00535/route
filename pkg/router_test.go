@@ -1,4 +1,4 @@
-package gonion
+package router
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 func TestMiddleware(t *testing.T) {
 	var actual string
-	mid := func(next Handler) Handler {
+	middle := func(next Handler) Handler {
 		return func(res interface{}) error {
 			actual = res.(string) + " world"
 			return next(res)
@@ -18,7 +18,7 @@ func TestMiddleware(t *testing.T) {
 	msg := "hello"
 	expect := "hello world"
 	processor := New()
-	processor.Use(mid)
+	processor.Use(middle)
 	processor.Run(msg)
 	assert.Equal(t, expect, actual)
 }
@@ -37,9 +37,13 @@ func TestTwoTopic(t *testing.T) {
 			return next(res)
 		}
 	}
-	msg := ""
-	expect := []string{"hello", "world"}
+	msg := "topic1"
+	switchRule := func(message interface{}) string {
+		return message.(string)
+	}
+	expect := []string{"world"}
 	processor := New()
+	processor.SetRouteRule(switchRule)
 	processor.UseTopic("topic1", mid1)
 	processor.UseTopic("topic2", mid2)
 	processor.Run(msg)
@@ -47,24 +51,19 @@ func TestTwoTopic(t *testing.T) {
 }
 
 func TestReturnError(t *testing.T) {
-	mid1 := func(next Handler) Handler {
+	mid := func(next Handler) Handler {
 		return func(res interface{}) error {
 			return errors.New("this is an error")
 		}
 	}
-	mid2 := func(next Handler) Handler {
-		return func(res interface{}) error {
-			return errors.New("this is another error")
-		}
+	msg := "topic1"
+	switchRule := func(message interface{}) string {
+		return message.(string)
 	}
-	msg := ""
-	expect := []error{
-		errors.New("this is an error"),
-		errors.New("this is another error"),
-	}
+	expect := errors.New("this is an error")
 	processor := New()
-	processor.UseTopic("topic1", mid1)
-	processor.UseTopic("topic2", mid2)
+	processor.SetRouteRule(switchRule)
+	processor.UseTopic("topic1", mid)
 	actual := processor.Run(msg)
 	assert.Equal(t, expect, actual)
 }
