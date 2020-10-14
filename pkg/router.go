@@ -1,5 +1,7 @@
 package router
 
+import "fmt"
+
 // Handler is query handler
 type Handler func(interface{}) error
 
@@ -53,7 +55,10 @@ func (r *Router) Run(message interface{}) error {
 	if r.handlers[topic] != nil {
 		return r.handlers[topic](message)
 	}
-	return nil
+	return RouterError{
+		message: fmt.Sprintf("topic %s is not registered.", topic),
+		errno:   errTopicNotFound,
+	}
 }
 
 // SetRouteRule set rule
