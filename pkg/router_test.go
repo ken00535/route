@@ -67,3 +67,20 @@ func TestReturnError(t *testing.T) {
 	actual := processor.Run(msg)
 	assert.Equal(t, expect, actual)
 }
+
+func TestNoTopicError(t *testing.T) {
+	mid := func(next Handler) Handler {
+		return func(res interface{}) error {
+			return errors.New("this is an error")
+		}
+	}
+	msg := "topic"
+	switchRule := func(message interface{}) string {
+		return message.(string)
+	}
+	processor := New()
+	processor.SetRouteRule(switchRule)
+	processor.UseTopic("topic1", mid)
+	actual := processor.Run(msg).(Error).IsTopicNotFound()
+	assert.Equal(t, true, actual)
+}
