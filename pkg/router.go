@@ -55,7 +55,11 @@ func (r *Router) Run(message interface{}) error {
 	if r.handlers[topic] != nil {
 		return r.handlers[topic](message)
 	}
+<<<<<<< Updated upstream
 	return RouterError{
+=======
+	return Error{
+>>>>>>> Stashed changes
 		message: fmt.Sprintf("topic %s is not registered.", topic),
 		errno:   errTopicNotFound,
 	}

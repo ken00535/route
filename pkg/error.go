@@ -4,17 +4,17 @@ const (
 	errTopicNotFound int = 1
 )
 
-// RouterError is error type of router
-type RouterError struct {
+// Error is error type of router
+type Error struct {
 	message string
 	errno   int
 }
 
-func (e RouterError) Error() string {
+func (e Error) Error() string {
 	return e.message
 }
 
 // IsTopicNotFound is topic error or not
-func (e RouterError) IsTopicNotFound() bool {
+func (e Error) IsTopicNotFound() bool {
 	return e.errno == errTopicNotFound
 }
