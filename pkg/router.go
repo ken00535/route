@@ -2,50 +2,41 @@ package router
 
 import "fmt"
 
-// Handler is query handler
-type Handler func(interface{}) error
+// HandlerFunc defines the handler used by gin middleware as return value.
+type HandlerFunc func(*Context)
 
-// Middleware is public middleware
-type Middleware func(Handler) Handler
+// HandlersChain defines a HandlerFunc array.
+type HandlersChain []HandlerFunc
 
 // New a Router
 func New() Router {
 	r := Router{}
-	r.middlewareChains = make(map[string][]Middleware)
-	r.handlers = make(map[string]Handler)
+	r.nodes = make(map[string]*node)
 	return r
 }
 
 // Router process message
 type Router struct {
-	routeRule        func(interface{}) string
-	middlewareChains map[string][]Middleware
-	handlers         map[string]Handler
+	routeRule func(interface{}) string
+	nodes     map[string]*node
 }
 
 // UseTopic add middleware
-func (r *Router) UseTopic(topic string, m ...Middleware) {
-	r.middlewareChains[topic] = append(r.middlewareChains[topic], m...)
-	r.handlers[topic] = func(interface{}) error {
-		return nil
+func (r *Router) UseTopic(topic string, m ...HandlerFunc) {
+	if _, exist := r.nodes[topic]; !exist {
+		r.nodes[topic] = &node{}
 	}
+	n := r.nodes[topic]
+	n.MergeHandler(m...)
 }
 
 // Use add middleware
-func (r *Router) Use(m ...Middleware) {
-	r.middlewareChains[defaultTopic] = append(r.middlewareChains[defaultTopic], m...)
-	r.handlers[defaultTopic] = func(interface{}) error {
-		return nil
-	}
+func (r *Router) Use(m ...HandlerFunc) {
+	r.UseTopic(defaultTopic, m...)
 }
 
 // Run router
 func (r *Router) Run(message interface{}) error {
-	for k, middlewareChain := range r.middlewareChains {
-		for i := len(middlewareChain) - 1; i >= 0; i-- {
-			r.handlers[k] = middlewareChain[i](r.handlers[k])
-		}
-	}
 	var topic string
 	if r.routeRule != nil {
 		topic = r.routeRule(message)
@@ -56,8 +47,13 @@ func (r *Router) Run(message interface{}) error {
 	if topic == "" {
 		return nil
 	}
-	if r.handlers[topic] != nil {
-		return r.handlers[topic](message)
+	if n, exist := r.nodes[topic]; exist {
+		c := Context{}
+		c.reset()
+		c.handlers = n.handlers
+		c.Message = message
+		c.Next()
+		return c.Errors.Last()
 	}
 	return Error{
 		message: fmt.Sprintf("topic %s is not registered.", topic),
