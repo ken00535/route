@@ -21,18 +21,17 @@ type Router struct {
 	nodes     map[string]*node
 }
 
-// UseTopic add middleware
-func (r *Router) UseTopic(topic string, m ...HandlerFunc) {
+// Use add middleware
+func (r *Router) Use(topic string, m ...HandlerFunc) {
+	// * is for default topic
+	if topic == "*" {
+		topic = defaultTopic
+	}
 	if _, exist := r.nodes[topic]; !exist {
 		r.nodes[topic] = &node{}
 	}
 	n := r.nodes[topic]
 	n.MergeHandler(m...)
-}
-
-// Use add middleware
-func (r *Router) Use(m ...HandlerFunc) {
-	r.UseTopic(defaultTopic, m...)
 }
 
 // Run router
