@@ -31,8 +31,8 @@ switchRule := func(message interface{}) string {
 expect := []string{"world"}
 router := New()
 router.SetRouteRule(switchRule)
-router.UseTopic("topic1", mid1)
-router.UseTopic("topic2", mid2)
+router.Use("topic1", mid1)
+router.Use("topic2", mid2)
 router.Run(msg)
 ```
 
@@ -50,6 +50,6 @@ switchRule := func(message interface{}) string {
 }
 router := New()
 router.SetRouteRule(switchRule)
-router.UseTopic("topic1", mid)
+router.Use("topic1", mid)
 actual := router.Run(msg).(Error).IsTopicNotFound()
 ```
