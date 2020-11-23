@@ -1,5 +1,5 @@
-package router
+package route
 
 const (
-	defaultTopic string = "github/gorouter/pkg/router"
+	defaultTopic string = "github/gorouter/pkg/route"
 )

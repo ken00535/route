@@ -1,4 +1,4 @@
-module github.com/ken00535/router
+module github.com/ken00535/route
 
 go 1.14
 
