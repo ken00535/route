@@ -36,6 +36,25 @@ router.Add("topic2", mid2)
 router.Run(msg)
 ```
 
+## Custom Middleware
+
+```go
+var actual string
+addHandler := func(c *Context) {
+    actual += " world"
+    c.Next()
+}
+useHandler := func(c *Context) {
+    actual = "hello lovely"
+    c.Next()
+}
+expect := "hello lovely world"
+router := New()
+router.Use(useHandler)
+router.Add("*", addHandler)
+router.Run("")
+```
+
 ## Error Handling
 
 you can handle error by
