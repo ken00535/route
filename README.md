@@ -1,6 +1,6 @@
-# router
+# route
 
-router provides a route mechanism, you can route your message easily.
+route provides a route mechanism, you can route your message easily.
 
 for example, if you have to handle your customized protocol (a.k.a not http), you can use it!
 
@@ -31,8 +31,8 @@ switchRule := func(message interface{}) string {
 expect := []string{"world"}
 router := New()
 router.SetRouteRule(switchRule)
-router.Use("topic1", mid1)
-router.Use("topic2", mid2)
+router.Add("topic1", mid1)
+router.Add("topic2", mid2)
 router.Run(msg)
 ```
 
@@ -50,6 +50,6 @@ switchRule := func(message interface{}) string {
 }
 router := New()
 router.SetRouteRule(switchRule)
-router.Use("topic1", mid)
+router.Add("topic1", mid)
 actual := router.Run(msg).(Error).IsTopicNotFound()
 ```

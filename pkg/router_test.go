@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMiddleware(t *testing.T) {
+func TestAdd(t *testing.T) {
 	var actual string
 	handler := func(c *Context) {
 		actual = c.Message.(string) + " world"
@@ -16,7 +16,7 @@ func TestMiddleware(t *testing.T) {
 	msg := "hello"
 	expect := "hello world"
 	router := New()
-	router.Use("*", handler)
+	router.Add("*", handler)
 	router.Run(msg)
 	assert.Equal(t, expect, actual)
 }
@@ -38,9 +38,27 @@ func TestTwoTopic(t *testing.T) {
 	expect := []string{"world"}
 	router := New()
 	router.SetRouteRule(switchRule)
-	router.Use("topic1", mid1)
-	router.Use("topic2", mid2)
+	router.Add("topic1", mid1)
+	router.Add("topic2", mid2)
 	router.Run(msg)
+	assert.Equal(t, expect, actual)
+}
+
+func TestUse(t *testing.T) {
+	var actual string
+	addHandler := func(c *Context) {
+		actual += " world"
+		c.Next()
+	}
+	useHandler := func(c *Context) {
+		actual = "hello lovely"
+		c.Next()
+	}
+	expect := "hello lovely world"
+	router := New()
+	router.Use(useHandler)
+	router.Add("*", addHandler)
+	router.Run("")
 	assert.Equal(t, expect, actual)
 }
 
@@ -55,7 +73,7 @@ func TestReturnError(t *testing.T) {
 	expect := &Error{message: "this is an error"}
 	router := New()
 	router.SetRouteRule(switchRule)
-	router.Use("topic1", mid)
+	router.Add("topic1", mid)
 	actual := router.Run(msg)
 	assert.Equal(t, expect, actual)
 }
@@ -70,7 +88,7 @@ func TestNoTopicError(t *testing.T) {
 	}
 	router := New()
 	router.SetRouteRule(switchRule)
-	router.Use("topic1", mid)
+	router.Add("topic1", mid)
 	actual := router.Run(msg).(Error).IsTopicNotFound()
 	assert.Equal(t, true, actual)
 }

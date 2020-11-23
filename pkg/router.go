@@ -17,12 +17,18 @@ func New() Router {
 
 // Router process message
 type Router struct {
-	routeRule func(interface{}) string
-	nodes     map[string]*node
+	routeRule     func(interface{}) string
+	nodes         map[string]*node
+	useMiddleware HandlersChain
 }
 
-// Use add middleware
-func (r *Router) Use(topic string, m ...HandlerFunc) {
+// Use attach middleware to every route
+func (r *Router) Use(m ...HandlerFunc) {
+	r.useMiddleware = append(r.useMiddleware, m...)
+}
+
+// Add add middleware
+func (r *Router) Add(topic string, m ...HandlerFunc) {
 	// * is for default topic
 	if topic == "*" {
 		topic = defaultTopic
@@ -31,6 +37,7 @@ func (r *Router) Use(topic string, m ...HandlerFunc) {
 		r.nodes[topic] = &node{}
 	}
 	n := r.nodes[topic]
+	m = append(r.useMiddleware, m...)
 	n.MergeHandler(m...)
 }
 
